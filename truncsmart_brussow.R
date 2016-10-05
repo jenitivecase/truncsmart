@@ -16,54 +16,63 @@
 ##'
 ##' edited 2016-10-04
 
-#instead of making a bunch of possible strings, my script focuses on finding the appropriate "index" value where 
+# Instead of making a bunch of possible strings, my script focuses on finding the appropriate "index" value 
+# where the string should be cut. This strategy makes it easier to paste things back together at the end.
+# Also, it's fewer lines of code, though it doesn't appear to be any faster. Run times are equal with comments removed.
+
 truncsmart <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, separator = c(" ", "_")) {
+  if(length(tol) > 2) stop("Please specify 1 or 2 values for tol.")
   lets <- unlist(strsplit(textstring, split = "")) #makes character vector into literally a vector of characters
   widthval <- ifelse(sapply(lets, function(x) x %in% LETTERS) == TRUE, capwidth, 1) #assigns larger width values for capital characters
   linelength <- cumsum(widthval) #calculates the cumulative length after each character
   if(linelength[length(linelength)] <= linewidth) return(textstring) #if the string is already short enough, return it
   index <- Position(function(x){x < linewidth}, linelength, right = TRUE) #sets the index position to the first adj value > linewidth
   breaks <- grepl(separator[1], lets) | grepl(separator[2], lets) #creates a vector showing where break characters are
-  if(!is.na(tol[2]) && sum(breaks[(index+1):(index+tol[2])]) > 0){ #if there are 2 tol values and a break in the forward check...
+  if(!is.na(tol[2]) && sum(breaks[(index+1):(index+tol[2])], na.rm = TRUE) > 0){ #if are two values and a break in the forward check
+    #when looking forward, NAs may be encountered. ref is the last non-NA value in the range
+    ref <- Position(function(x){!is.na(x)}, breaks[(index+1):(index+tol[2])], right = TRUE) #the last non-NA value in the forward tol
     #have to add 1 to index so we aren't evaluating it. have to subtract 1 from result to remove trailing break
-    index <- Position(function(x){x == TRUE}, breaks[(index+1):(index+tol[2])], right = TRUE)+index-1 #set index to last break found in range
-  } else if(sum(breaks[(index-tol[1]):(index-1)]) > 0){ #if there is no second tol value or no breaks in forward tol, look backwards
-    #have to subtract 1 from index so we aren't evaluating it. have to subtract 1 from result to remove trailing break
-    index <- index-tol[1]+Position(function(x){x == TRUE}, breaks[(index-tol[1]):(index-1)], right = TRUE)-1
+    index <- Position(function(x){x == TRUE}, breaks[(index+1):(index+ref)], right = TRUE)+index-1 #set index to last break found in range
+  } else if(sum(breaks[(index-tol[1]):(index-1)], na.rm = TRUE) > 0){ #if there is no second tol value or no breaks in forward tol, look backwards
+    #have to subtract 1 from index so we aren't evaluating it. have to subtract 2 from result to remove trailing break
+    index <- index-tol[1]+Position(function(x){x == TRUE}, breaks[(index-tol[1]):(index-1)], right = TRUE)-2
   }#if neither condition is satisfied, index remains in its initial position.
   out <- paste0(lets[1:index], collapse = "") #put the string back together
   return(out)
 }
 
 #testing the new version
-system.time(for(i in 1:10000){truncsmart("This is a string with l o t s o f b r e a k s in it", 30)})
-system.time(for(i in 1:10000){truncsmart("This_is_a_string_with_l_o_t_s_o_f_b_r_e_a_k_s_in_it", 30)})
-system.time(for(i in 1:10000){truncsmart("This is a string with nobreakswhereyoumightwantthemtobe", 30)})
-system.time(for(i in 1:10000){truncsmart("This is a string with breaks where you might think", 30)})
+truncsmart("This is a string with l o t s o f b r e a k s in it", 30)
+truncsmart("This_is_a_string_with_l_o_t_s_o_f_b_r_e_a_k_s_in_it", 30, 3)
+truncsmart("This is a string with nobreakswhereyoumightwantthemtobe", 30)
+truncsmart("This is a string with breaks where you might think", 30)
+truncsmart("This is too short", 30)
+truncsmart("This is not too short but medium", 30)
 
+#I am unfamiliar with the vectorize command, but it appears to be making the function slower?? I am not using it.
+# truncsmart <- Vectorize(truncsmart, USE.NAMES=FALSE)
 
-#I am unfamiliar with the vectorize command, but it appears to be making the function spit out two results???
-truncsmart <- Vectorize(truncsmart, USE.NAMES=FALSE)
-
-
-#line breaking test
+#line breaking test - just a cleaned up truncsmart with a better out pasting. 
+#new param newline is the break you want to insert.
 linetrunc <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, separator = c(" ", "_"), newline = "/n") {
-  lets <- unlist(strsplit(textstring, split = "")) 
-  widthval <- ifelse(sapply(lets, function(x) x %in% LETTERS) == TRUE, capwidth, 1) 
+  if(length(tol) > 2) stop("Please specify 1 or 2 values for tol.")
+  lets <- unlist(strsplit(textstring, split = ""))
+  widthval <- ifelse(sapply(lets, function(x) x %in% LETTERS) == TRUE, capwidth, 1)
   linelength <- cumsum(widthval) 
   if(linelength[length(linelength)] <= linewidth) return(textstring)
-  index <- Position(function(x){x < linewidth}, linelength, right = TRUE) 
+  index <- Position(function(x){x < linewidth}, linelength, right = TRUE)
   breaks <- grepl(separator[1], lets) | grepl(separator[2], lets) 
-  if(!is.na(tol[2]) && sum(breaks[(index+1):(index+tol[2])]) > 0){ 
-    index <- Position(function(x){x == TRUE}, breaks[(index+1):(index+tol[2])], right = TRUE)+index-1 
-  } else if(sum(breaks[(index-tol[1]):(index-1)]) > 0){ 
-    index <- index-tol[1]+Position(function(x){x == TRUE}, breaks[(index-tol[1]):(index-1)], right = TRUE)-1
+  if(!is.na(tol[2]) && sum(breaks[(index+1):(index+tol[2])], na.rm = TRUE) > 0){ 
+    ref <- Position(function(x){!is.na(x)}, breaks[(index+1):(index+tol[2])], right = TRUE) 
+    index <- Position(function(x){x == TRUE}, breaks[(index+1):(index+ref)], right = TRUE)+index-1 
+  } else if(sum(breaks[(index-tol[1]):(index-1)], na.rm = TRUE) > 0){ 
+    index <- index-tol[1]+Position(function(x){x == TRUE}, breaks[(index-tol[1]):(index-1)], right = TRUE)-2
   }
   out <- paste0(paste0(lets[1:index], collapse = ""), newline, paste0(lets[(index+2):length(lets)], collapse = "")) 
   return(out)
 }
 
-#test
+#testing linetrunc
 linetrunc("This is a string with l o t s o f b r e a k s in it", 30)
 linetrunc("This_is_a_string_with_l_o_t_s_o_f_b_r_e_a_k_s_in_it", 30)
 linetrunc("This is a string with nobreakswhereyoumightwantthemtobe", 30)
@@ -119,7 +128,52 @@ truncsmart_old <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2,
   out
 }
 
-system.time(for(i in 1:10000){truncsmart_old("This is a string with l o t s o f b r e a k s in it", 30)})
-system.time(for(i in 1:10000){truncsmart_old("This_is_a_string_with_l_o_t_s_o_f_b_r_e_a_k_s_in_it", 30)})
-system.time(for(i in 1:10000){truncsmart_old("This is a string with nobreakswhereyoumightwantthemtobe", 30)})
-system.time(for(i in 1:10000){truncsmart_old("This is a string with breaks where you might think", 30)})
+truncsmart_old("This is a string with l o t s o f b r e a k s in it", 30)
+truncsmart_old("This_is_a_string_with_l_o_t_s_o_f_b_r_e_a_k_s_in_it", 30)
+truncsmart_old("This is a string with nobreakswhereyoumightwantthemtobe", 30)
+truncsmart_old("This is a string with breaks where you might think", 30)
+truncsmart_old("This is too short", 30)
+truncsmart_old("This is not too short but medium", 30)
+
+####### Speed testing #######
+#redefine without comments for accurate estimates
+truncsmart <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, separator = c(" ", "_")) {
+  if(length(tol) > 2) stop("Please specify 1 or 2 values for tol.")
+  lets <- unlist(strsplit(textstring, split = "")) 
+  widthval <- ifelse(sapply(lets, function(x) x %in% LETTERS) == TRUE, capwidth, 1) 
+  linelength <- cumsum(widthval) 
+  if(linelength[length(linelength)] <= linewidth) return(textstring) 
+  index <- Position(function(x){x < linewidth}, linelength, right = TRUE) 
+  breaks <- grepl(separator[1], lets) | grepl(separator[2], lets) 
+  if(!is.na(tol[2]) && sum(breaks[(index+1):(index+tol[2])], na.rm = TRUE) > 0){ 
+    ref <- Position(function(x){!is.na(x)}, breaks[(index+1):(index+tol[2])], right = TRUE) 
+    index <- Position(function(x){x == TRUE}, breaks[(index+1):(index+ref)], right = TRUE)+index-1 
+  } else if(sum(breaks[(index-tol[1]):(index-1)], na.rm = TRUE) > 0){ 
+    index <- index-tol[1]+Position(function(x){x == TRUE}, breaks[(index-tol[1]):(index-1)], right = TRUE)-2
+  }
+  out <- paste0(lets[1:index], collapse = "") 
+  return(out)
+}
+
+time1 <- 0
+for(j in 1:100){
+  time1[j] <- system.time(for(i in 1:10000){truncsmart("This is a string with l o t s o f b r e a k s in it", 30)})
+}
+mean(time1[3])
+
+time2 <- 0
+for(j in 1:100){
+  time2[j] <- system.time(for(i in 1:10000){truncsmart_old("This is a string with l o t s o f b r e a k s in it", 30)})
+}
+mean(time2[3])
+
+GRF <- readRDS("S:/Projects/DLM Secure/1-ELA and Math/Scoring/GRF/GRF Output/2016/Batch 2/Internal DLM GRF/Full_Batch_2_GRF_20160722.Rds")
+test_frame <- GRF[c("District", "School")]
+rm(GRF)
+gc()
+
+#about equal times for each function on my machine
+system.time(test_frame$dist_test2 <- sapply(X = test_frame$District, FUN = truncsmart, linewidth=30, tol=3))
+system.time(test_frame$dist_test2 <- sapply(X = test_frame$District, FUN = truncsmart_old, linewidth=30, tol=3))
+
+
