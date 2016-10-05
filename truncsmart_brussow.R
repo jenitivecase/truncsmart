@@ -16,6 +16,7 @@
 ##'
 ##' edited 2016-10-04
 
+### The actual result ################################################################################################################
 # Instead of making a bunch of possible strings, my script focuses on finding the appropriate "index" value 
 # where the string should be cut. This strategy makes it easier to paste things back together at the end.
 # Also, it's fewer lines of code, though it doesn't appear to be any faster. Run times are equal with comments removed.
@@ -41,6 +42,8 @@ truncsmart <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, sep
   return(out)
 }
 
+######################################################################################################################################
+
 #testing the new version
 truncsmart("This is a string with l o t s o f b r e a k s in it", 30)
 truncsmart("This_is_a_string_with_l_o_t_s_o_f_b_r_e_a_k_s_in_it", 30, 3)
@@ -52,7 +55,7 @@ truncsmart("This is not too short but medium", 30)
 #I am unfamiliar with the vectorize command, but it appears to be making the function slower?? I am not using it.
 # truncsmart <- Vectorize(truncsmart, USE.NAMES=FALSE)
 
-#line breaking test - just a cleaned up truncsmart with a better out pasting. 
+### line breaking function - just a cleaned up truncsmart with a better out pasting. #################################################
 #new param newline is the break you want to insert.
 linetrunc <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, separator = c(" ", "_"), newline = "/n") {
   if(length(tol) > 2) stop("Please specify 1 or 2 values for tol.")
@@ -78,8 +81,7 @@ linetrunc("This_is_a_string_with_l_o_t_s_o_f_b_r_e_a_k_s_in_it", 30)
 linetrunc("This is a string with nobreakswhereyoumightwantthemtobe", 30)
 
 
-######################################################################################################################################
-#clocking the original version
+# the original version ###############################################################################################################
 truncsmart_old <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, separator = c(" ", "_")) {
   if(length(tol) > 2) stop("Please specify 1 or 2 values for tol.")
   lets <- unlist(strsplit(textstring, split = ""))
@@ -135,8 +137,8 @@ truncsmart_old("This is a string with breaks where you might think", 30)
 truncsmart_old("This is too short", 30)
 truncsmart_old("This is not too short but medium", 30)
 
-####### Speed testing #######
-#redefine without comments for accurate estimates
+####### Speed testing ################################################################################################################
+#redefine without comments for accurate estimates, since comments appear to slow it down??
 truncsmart <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, separator = c(" ", "_")) {
   if(length(tol) > 2) stop("Please specify 1 or 2 values for tol.")
   lets <- unlist(strsplit(textstring, split = "")) 
@@ -157,23 +159,23 @@ truncsmart <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, sep
 
 time1 <- 0
 for(j in 1:100){
-  time1[j] <- system.time(for(i in 1:10000){truncsmart("This is a string with l o t s o f b r e a k s in it", 30)})
+  time1 <- time1 + system.time(for(i in 1:10000){truncsmart("This is a string with l o t s o f b r e a k s in it", 30)})
 }
-mean(time1[3])
+time1/100
 
 time2 <- 0
 for(j in 1:100){
-  time2[j] <- system.time(for(i in 1:10000){truncsmart_old("This is a string with l o t s o f b r e a k s in it", 30)})
+  time2 <- time2 + system.time(for(i in 1:10000){truncsmart_old("This is a string with l o t s o f b r e a k s in it", 30)})
 }
-mean(time2[3])
+time2/100
 
 GRF <- readRDS("S:/Projects/DLM Secure/1-ELA and Math/Scoring/GRF/GRF Output/2016/Batch 2/Internal DLM GRF/Full_Batch_2_GRF_20160722.Rds")
 test_frame <- GRF[c("District", "School")]
 rm(GRF)
 gc()
 
-#about equal times for each function on my machine
-system.time(test_frame$dist_test2 <- sapply(X = test_frame$District, FUN = truncsmart, linewidth=30, tol=3))
-system.time(test_frame$dist_test2 <- sapply(X = test_frame$District, FUN = truncsmart_old, linewidth=30, tol=3))
+#this results in basically equal times for each function on my machine - approx 4.1 seconds for new & 4.4 for old
+system.time(test_frame$dist_test2 <- sapply(X = test_frame$District, FUN = truncsmart, linewidth=30))
+system.time(test_frame$dist_test2 <- sapply(X = test_frame$District, FUN = truncsmart_old, linewidth=30))
 
 
