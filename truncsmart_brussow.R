@@ -22,6 +22,14 @@ truncsmart <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, sep
   widthval <- ifelse(sapply(lets, function(x) x %in% LETTERS) == TRUE, capwidth, 1) #assigns larger width values for capital characters
   linelength <- cumsum(widthval) #calculates the cumulative length after each character
   if(linelength[length(linelength)] <= linewidth) return(textstring) #if the string is already short enough, return it
+  breaks <- grepl(separator[1], lets) | grepl(separator[2], lets)
+  if(!is.na(tol[2]) && sum(breaks[linewidth:(linewidth+tol[1])]) > 0){
+    index <- Position(function(x){x == TRUE}, breaks[linewidth:(linewidth+tol[1])], right = TRUE)+linewidth-1
+  } else if(sum(breaks[(linewidth-tol[2]):linewidth) > 0){
+    index <- Position(function(x){x == TRUE}, breaks[linewidth:(linewidth+tol[1])], right = TRUE)+linewidth-1
+    
+  }
+  
   letswl <- lets[linelength  <= linewidth] #cuts the string at the length point given by the user
   letswt <- lets[linelength <= (linewidth + tol[length(tol)])] #cuts the string at the length point + tolerance
   letso <- letswl #makes another reference variable at the user-given length - what is returned if no breaks are found
