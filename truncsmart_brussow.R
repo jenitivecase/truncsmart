@@ -19,7 +19,7 @@
 ### The actual result ################################################################################################################
 # Instead of making a bunch of possible strings, my script focuses on finding the appropriate "index" value 
 # where the string should be cut. This strategy makes it easier to paste things back together at the end.
-# Also, it's fewer lines of code, though it doesn't appear to be any faster. Run times are equal with comments removed.
+# Also, it's fewer lines of code, and it appears to be marginally faster. Run times are similar with comments removed.
 
 truncsmart <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, separator = c(" ", "_")) {
   if(length(tol) > 2) stop("Please specify 1 or 2 values for tol.")
@@ -29,16 +29,16 @@ truncsmart <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, sep
   if(linelength[length(linelength)] <= linewidth) return(textstring) #if the string is already short enough, return it
   index <- Position(function(x){x < linewidth}, linelength, right = TRUE) #sets the index position to the first adj value > linewidth
   breaks <- grepl(separator[1], lets) | grepl(separator[2], lets) #creates a vector showing where break characters are
-  if(!is.na(tol[2]) && sum(breaks[(index+1):(index+tol[2])], na.rm = TRUE) > 0){ #if are two values and a break in the forward check
-    #when looking forward, NAs may be encountered. ref is the last non-NA value in the range
+  if(!is.na(tol[2]) && sum(breaks[(index+1):(index+tol[2])], na.rm = TRUE) > 0){ #if are two values and a break in the forward check...
+    #when looking forward, NAs may be encountered. ref is the last non-NA value in the range to avoid these
     ref <- Position(function(x){!is.na(x)}, breaks[(index+1):(index+tol[2])], right = TRUE) #the last non-NA value in the forward tol
     #have to add 1 to index so we aren't evaluating it. have to subtract 1 from result to remove trailing break
     index <- Position(function(x){x == TRUE}, breaks[(index+1):(index+ref)], right = TRUE)+index-1 #set index to last break found in range
-  } else if(sum(breaks[(index-tol[1]):(index-1)], na.rm = TRUE) > 0){ #if there is no second tol value or no breaks in forward tol, look backwards
-    #have to subtract 1 from index so we aren't evaluating it. have to subtract 2 from result to remove trailing break
+  } else if(sum(breaks[(index-tol[1]):(index-1)], na.rm = TRUE) > 0){ #if no 2nd tol value or no breaks in forward tol, look backwards
+    #have to subtract 1 from index so we aren't evaluating it. have to subtract 2 from result to remove trailing break & acct for index
     index <- index-tol[1]+Position(function(x){x == TRUE}, breaks[(index-tol[1]):(index-1)], right = TRUE)-2
-  }#if neither condition is satisfied, index remains in its initial position.
-  out <- paste0(lets[1:index], collapse = "") #put the string back together
+  } #if neither condition is satisfied, index remains in its initial position.
+  out <- paste0(lets[1:index], collapse = "") #put the string back together up to the index point
   return(out)
 }
 
