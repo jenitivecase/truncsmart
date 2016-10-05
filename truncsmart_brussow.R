@@ -25,19 +25,16 @@ truncsmart <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, sep
   letswl <- lets[linelength  <= linewidth] #cuts the string at the length point given by the user
   letswt <- lets[linelength <= (linewidth + tol[length(tol)])] #cuts the string at the length point + tolerance
   letso <- letswl #makes another reference variable at the user-given length - what is returned if no breaks are found
-  if(sum(grepl(as.character(separator[1]), letswl[(length(letswl)-tol[1]):(length(letswl))])) > 0 |
-     sum(grepl(as.character(separator[2]), letswl[(length(letswl)-tol[1]):(length(letswl))])) > 0){
-    #if a logical cut exists at the lower end of the tolerance, take that
-    index <- tail(which(grepl(as.character(separator[1]), letswl[(length(letswl)-tol[1]):(length(letswl))])), n=1) #must use tail in case two breaks exist
-    if(length(index) == 0){index <- tail(which(grepl(as.character(separator[2]), letswl[(length(letswl)-tol[1]):(length(letswl))])), n=1)}
-    letso <- letswl[1:((length(letswl)-tol[1])+index-2)]
-  } 
-  if(!is.na(tol[2]) && sum(grepl(as.character(separator[1]), letswt[(length(letswt)-tol[2]):(length(letswt))])) > 0 |
-     sum(grepl(as.character(separator[2]), letswt[(length(letswt)-tol[2]):(length(letswt))])) > 0){
-    #if a logical cut exists at the higher end of the tolerance, that is better!!
-    index <- tail(which(grepl(as.character(separator[1]), letswt[(length(letswt)-tol[2]):(length(letswt))])), n=1)
-    if(length(index) == 0){index <- tail(which(grepl(as.character(separator[2]), letswt[(length(letswt)-tol[2]):(length(letswt))])), n=1)}
+  index_swl <- tail(which(grepl(as.character(separator[1]), letswl[(length(letswl)-tol[1]):(length(letswl))])), n=1)
+  if(length(index_swl == 0)){index_swl <- tail(which(grepl(as.character(separator[2]), letswl[(length(letswl)-tol[1]):(length(letswl))])), n=1)}
+  if(!is.na(tol[2])){
+    index_swt <- tail(which(grepl(as.character(separator[1]), letswt[(length(letswt)-tol[2]):(length(letswt))])), n=1)
+    if(length(index_swt) == 0){index_swt <- tail(which(grepl(as.character(separator[2]), letswt[(length(letswt)-tol[2]):(length(letswt))])), n=1)}
+  }
+  if(length(index_swt) != 0){
     letso <- letswt[1:((length(letswt)-tol[2])+index-2)]
+  } else if(length(index_swl) != 0){
+    letso <- letswl[1:((length(letswl)-tol[1])+index-2)]
   }
   letso <- paste0(letso, collapse  = "")
   return(letso)
@@ -91,36 +88,6 @@ linetrunc("This is a string with nobreakswhereyoumightwantthemtobe", 30)
 
 
 ######################################################################################################################################
-#clocking my version
-
-truncsmart <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, separator = c(" ", "_")) {
-  lets <- unlist(strsplit(textstring, split = "")) #makes character vector into literally a vector of characters
-  widthval <- ifelse(sapply(lets, function(x) x %in% LETTERS) == TRUE, capwidth, 1) #assigns larger width values for capital characters
-  linelength <- cumsum(widthval) #calculates the cumulative length after each character
-  if(linelength[length(linelength)] <= linewidth) return(textstring) #if the string is already short enough, return it
-  withinlength <- linelength  <= linewidth #vector of T/F values showing the desired cut location
-  withintol <- linelength <= (linewidth + tol[length(tol)]) #extends the acceptable length according to the tolerance value specified
-  letswl <- lets[withinlength] #cuts the string at the length point given by the user
-  letswt <- lets[withintol] #cuts the string at the length point + tolerance
-  letso <- letswl #makes another reference variable
-  if(sum(grepl(as.character(separator[1]), letswl[(length(letswl)-tol[1]):(length(letswl))])) > 0 |
-     sum(grepl(as.character(separator[2]), letswl[(length(letswl)-tol[1]):(length(letswl))])) > 0){
-    #if a logical cut exists at the lower end of the tolerance, take that
-    index <- tail(which(grepl(as.character(separator[1]), letswl[(length(letswl)-tol[1]):(length(letswl))])), n=1) #must use tail in case two breaks exist
-    if(length(index) == 0){index <- tail(which(grepl(as.character(separator[2]), letswl[(length(letswl)-tol[1]):(length(letswl))])), n=1)}
-    letso <- letswl[1:((length(letswl)-tol[1])+index-2)]
-  } 
-  if(!is.na(tol[2]) && sum(grepl(as.character(separator[1]), letswt[(length(letswt)-tol[2]):(length(letswt))])) > 0 |
-     sum(grepl(as.character(separator[2]), letswt[(length(letswt)-tol[2]):(length(letswt))])) > 0){
-    #if a logical cut exists at the higher end of the tolerance, that is better!!
-    index <- tail(which(grepl(as.character(separator[1]), letswt[(length(letswt)-tol[2]):(length(letswt))])), n=1)
-    if(length(index) == 0){index <- tail(which(grepl(as.character(separator[2]), letswt[(length(letswt)-tol[2]):(length(letswt))])), n=1)}
-    letso <- letswt[1:((length(letswt)-tol[2])+index-2)]
-  }
-  out <- paste0(letso, collapse  = "")
-  return(out)
-}
-
 #clocking the original version
 truncsmart <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, separator = c(" ", "_")) {
   if(length(tol) > 2) stop("Please specify 1 or 2 values for tol.")
@@ -170,6 +137,6 @@ truncsmart <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, sep
   out
 }
 
-system.time(for(i in 1:100000){truncsmart("This is a string with l o t s o f b r e a k s in it", 30)})
+system.time(for(i in 1:10000){truncsmart("This is a string with l o t s o f b r e a k s in it", 30)})
 system.time(for(i in 1:10000){truncsmart("This_is_a_string_with_l_o_t_s_o_f_b_r_e_a_k_s_in_it", 30)})
 system.time(for(i in 1:10000){truncsmart("This is a string with nobreakswhereyoumightwantthemtobe", 30)})
