@@ -20,6 +20,7 @@
 # Instead of making a bunch of possible strings, my script focuses on finding the appropriate "index" value 
 # where the string should be cut. This strategy makes it easier to paste things back together at the end.
 # Also, it's fewer lines of code, and it appears to be marginally faster. Run times are similar with comments removed.
+# A comment-free version can be found starting on line 157.
 
 truncsmart <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, separator = c(" ", "_")) {
   if(length(tol) > 2) stop("Please specify 1 or 2 values for tol.")
@@ -59,17 +60,16 @@ truncsmart("This is not too short but medium", 30)
 #new param newline is the break you want to insert.
 linetrunc <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, separator = c(" ", "_"), newline = "/n") {
   if(length(tol) > 2) stop("Please specify 1 or 2 values for tol.")
-  out <- list()
+  out <- list() #we are going to store the substrings in a list called out
   lets <- unlist(strsplit(textstring, split = ""))
   widthval <- ifelse(sapply(lets, function(x) x %in% LETTERS) == TRUE, capwidth, 1)
-  max <- ceiling(sum(widthval)/linewidth)
+  if(sum(widthval) <= linewidth){return(textstring)}
+  max <- ceiling(sum(widthval)/linewidth) #how many reps to do/substrings to complete
   for(i in 1:max){
     lets <- unlist(strsplit(textstring, split = ""))
     widthval <- ifelse(sapply(lets, function(x) x %in% LETTERS) == TRUE, capwidth, 1)
     linelength <- cumsum(widthval) 
-    if(i==1 && linelength[length(linelength)] <= linewidth){
-      return(textstring)
-    } else if(linelength[length(linelength)] <= linewidth){
+    if(linelength[length(linelength)] <= linewidth){
       out[[i]] <- textstring
     } else {
     index <- Position(function(x){x < linewidth}, linelength, right = TRUE)
@@ -81,7 +81,7 @@ linetrunc <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, sepa
       index <- index-tol[1]+Position(function(x){x == TRUE}, breaks[(index-tol[1]):(index-1)], right = TRUE)-2
     }
     out[[i]] <- paste0(paste0(lets[1:index], collapse = ""), newline) 
-    textstring <- paste0(lets[(index+2):length(lets)], collapse = "")
+    textstring <- paste0(lets[(index+2):length(lets)], collapse = "") #this is a problem when no break is found because it skips a space that doesn't exist
     }
   }
   out <- paste0(unlist(out), collapse = "")
@@ -90,9 +90,10 @@ linetrunc <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, sepa
 
 #testing linetrunc
 linetrunc("Here is a REALLY long test string that needs to be BROKEN into multiple LINES so that everything will WORK OUT look at the test", 30)
-linetrunc("This_is_a_string_with_l_o_t_s_o_f_b_r_e_a_k_s_in_it", 30)
+linetrunc("THIS IS A DIFFERENT_LONG_STRING THAT HAS ALL CAPS BECAUSE CAPS ARE DIFFICULT_RIGHT_YES_THEY SURE ARE LOOK AT THE CAPS", 30)
 linetrunc("This is a string with nobreakswhereyoumightwantthemtobe", 30)
-
+linetrunc("Here is a short string", 30)
+linetrunc("What is the optimal length of string? I have no idea.", 30, 3)
 
 # the original version ###############################################################################################################
 truncsmart_old <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, separator = c(" ", "_")) {
