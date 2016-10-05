@@ -21,37 +21,24 @@ truncsmart <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, sep
   lets <- unlist(strsplit(textstring, split = "")) #makes character vector into literally a vector of characters
   widthval <- ifelse(sapply(lets, function(x) x %in% LETTERS) == TRUE, capwidth, 1) #assigns larger width values for capital characters
   linelength <- cumsum(widthval) #calculates the cumulative length after each character
+  index <- Position(function(x){x < linewidth}, linelength, right = TRUE)
   if(linelength[length(linelength)] <= linewidth) return(textstring) #if the string is already short enough, return it
   breaks <- grepl(separator[1], lets) | grepl(separator[2], lets)
-  if(!is.na(tol[2]) && sum(breaks[linewidth:(linewidth+tol[1])]) > 0){
-    index <- Position(function(x){x == TRUE}, breaks[linewidth:(linewidth+tol[1])], right = TRUE)+linewidth-1
-  } else if(sum(breaks[(linewidth-tol[2]):linewidth]) > 0){
-    index <- linewidth-tol[2]+Position(function(x){x == TRUE}, breaks[(linewidth-tol[2]):linewidth], right = TRUE)-1
-    
+  if(!is.na(tol[2]) && sum(breaks[index:(index+tol[1])]) > 0){
+    index <- Position(function(x){x == TRUE}, breaks[index:(index+tol[1])], right = TRUE)+index-2
+  } else if(sum(breaks[(index-tol[2]):index]) > 0){
+    index <- index-tol[2]+Position(function(x){x == TRUE}, breaks[(index-tol[2]):index], right = TRUE)-2
   }
-  
-  letswl <- lets[linelength  <= linewidth] #cuts the string at the length point given by the user
-  letswt <- lets[linelength <= (linewidth + tol[length(tol)])] #cuts the string at the length point + tolerance
-  letso <- letswl #makes another reference variable at the user-given length - what is returned if no breaks are found
-  index_swl <- tail(which(grepl(as.character(separator[1]), letswl[(length(letswl)-tol[1]):(length(letswl))])), n=1)
-  if(length(index_swl == 0)){index_swl <- tail(which(grepl(as.character(separator[2]), letswl[(length(letswl)-tol[1]):(length(letswl))])), n=1)}
-  if(!is.na(tol[2])){
-    index_swt <- tail(which(grepl(as.character(separator[1]), letswt[(length(letswt)-tol[2]):(length(letswt))])), n=1)
-    if(length(index_swt) == 0){index_swt <- tail(which(grepl(as.character(separator[2]), letswt[(length(letswt)-tol[2]):(length(letswt))])), n=1)}
-  }
-  if(length(index_swt) != 0){
-    letso <- letswt[1:((length(letswt)-tol[2])+index-2)]
-  } else if(length(index_swl) != 0){
-    letso <- letswl[1:((length(letswl)-tol[1])+index-2)]
-  }
-  letso <- paste0(letso, collapse  = "")
-  return(letso)
+  out <- paste0(lets[1:index], collapse = "")
+  return(out)
 }
 
 #test
 system.time(for(i in 1:10000){truncsmart("This is a string with l o t s o f b r e a k s in it", 30)})
 system.time(for(i in 1:10000){truncsmart("This_is_a_string_with_l_o_t_s_o_f_b_r_e_a_k_s_in_it", 30)})
 system.time(for(i in 1:10000){truncsmart("This is a string with nobreakswhereyoumightwantthemtobe", 30)})
+system.time(for(i in 1:10000){truncsmart("This is a string with breaks where you might think", 30)})
+
 
 #I am unfamiliar with the vectorize command, but it appears to be making the function spit out two results???
 truncsmart <- Vectorize(truncsmart, USE.NAMES=FALSE)
