@@ -25,8 +25,8 @@ truncsmart <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, sep
   breaks <- grepl(separator[1], lets) | grepl(separator[2], lets)
   if(!is.na(tol[2]) && sum(breaks[linewidth:(linewidth+tol[1])]) > 0){
     index <- Position(function(x){x == TRUE}, breaks[linewidth:(linewidth+tol[1])], right = TRUE)+linewidth-1
-  } else if(sum(breaks[(linewidth-tol[2]):linewidth) > 0){
-    index <- Position(function(x){x == TRUE}, breaks[linewidth:(linewidth+tol[1])], right = TRUE)+linewidth-1
+  } else if(sum(breaks[(linewidth-tol[2]):linewidth]) > 0){
+    index <- linewidth-tol[2]+Position(function(x){x == TRUE}, breaks[(linewidth-tol[2]):linewidth], right = TRUE)-1
     
   }
   
