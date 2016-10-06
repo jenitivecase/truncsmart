@@ -60,11 +60,11 @@ truncsmart("This is not too short but medium", 30)
 #new param newline is the break you want to insert.
 linetrunc <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, separator = c(" ", "_"), newline = "/n") {
   if(length(tol) > 2) stop("Please specify 1 or 2 values for tol.")
-  out <- list() #we are going to store the substrings in a list called out
   lets <- unlist(strsplit(textstring, split = ""))
   widthval <- ifelse(sapply(lets, function(x) x %in% LETTERS) == TRUE, capwidth, 1)
   if(sum(widthval) <= linewidth){return(textstring)}
   max <- ceiling(sum(widthval)/linewidth) #how many reps to do/substrings to complete
+  out <- vector("list", max) #we are going to store the substrings in a list called out
   for(i in 1:max){
     lets <- unlist(strsplit(textstring, split = ""))
     widthval <- ifelse(sapply(lets, function(x) x %in% LETTERS) == TRUE, capwidth, 1)
@@ -72,16 +72,18 @@ linetrunc <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, sepa
     if(linelength[length(linelength)] <= linewidth){
       out[[i]] <- textstring
     } else {
-    index <- Position(function(x){x < linewidth}, linelength, right = TRUE)
-    breaks <- grepl(separator[1], lets) | grepl(separator[2], lets) 
-    if(!is.na(tol[2]) && sum(breaks[(index+1):(index+tol[2])], na.rm = TRUE) > 0){ 
-      ref <- Position(function(x){!is.na(x)}, breaks[(index+1):(index+tol[2])], right = TRUE) 
-      index <- Position(function(x){x == TRUE}, breaks[(index+1):(index+ref)], right = TRUE)+index-1 
-    } else if(sum(breaks[(index-tol[1]):(index-1)], na.rm = TRUE) > 0){ 
-      index <- index-tol[1]+Position(function(x){x == TRUE}, breaks[(index-tol[1]):(index-1)], right = TRUE)-2
-    }
-    out[[i]] <- paste0(paste0(lets[1:index], collapse = ""), newline) 
-    textstring <- paste0(lets[(index+2):length(lets)], collapse = "") #this is a problem when no break is found because it skips a space that doesn't exist
+      index <- Position(function(x){x < linewidth}, linelength, right = TRUE)
+      breaks <- grepl(separator[1], lets) | grepl(separator[2], lets) 
+      if(!is.na(tol[2]) && sum(breaks[(index+1):(index+tol[2])], na.rm = TRUE) > 0){ 
+        ref <- Position(function(x){!is.na(x)}, breaks[(index+1):(index+tol[2])], right = TRUE) 
+        index <- Position(function(x){x == TRUE}, breaks[(index+1):(index+ref)], right = TRUE)+index-1 
+      } else if(sum(breaks[(index-tol[1]):(index-1)], na.rm = TRUE) > 0){ 
+        index <- index-tol[1]+Position(function(x){x == TRUE}, breaks[(index-tol[1]):(index-1)], right = TRUE)-2
+      } 
+      out[[i]] <- paste0(paste0(lets[1:index], collapse = ""), newline) 
+      textstring <- paste0(lets[(index+1):length(lets)], collapse = "")
+      textstring <- gsub(paste0("^",separator[1]), "", textstring) 
+      textstring <- gsub(paste0("^",separator[2]), "", textstring)  #removing the leading space if applicable. necessary for cases w/ no good break
     }
   }
   out <- paste0(unlist(out), collapse = "")
