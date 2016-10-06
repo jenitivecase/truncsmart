@@ -58,7 +58,7 @@ truncsmart("This is not too short but medium", 30)
 
 ### line breaking function - just a cleaned up truncsmart with a better out pasting. #################################################
 #new param newline is the break you want to insert.
-linetrunc <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, separator = c(" ", "_"), newline = "/n") {
+linetrunc <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, separator = c(" ", "_"), newline = "\n") {
   if(length(tol) > 2) stop("Please specify 1 or 2 values for tol.")
   lets <- unlist(strsplit(textstring, split = ""))
   widthval <- ifelse(sapply(lets, function(x) x %in% LETTERS) == TRUE, capwidth, 1)
@@ -83,7 +83,9 @@ linetrunc <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, sepa
       out[[i]] <- paste0(paste0(lets[1:index], collapse = ""), newline) 
       textstring <- paste0(lets[(index+1):length(lets)], collapse = "")
       textstring <- gsub(paste0("^",separator[1]), "", textstring) 
-      textstring <- gsub(paste0("^",separator[2]), "", textstring)  #removing the leading space if applicable. necessary for cases w/ no good break
+      if(!is.na(separator[2])) {
+        textstring <- gsub(paste0("^",separator[2]), "", textstring)  #removing the leading space if applicable. necessary for cases w/ no good break
+      }
     }
   }
   out <- paste0(unlist(out), collapse = "")
