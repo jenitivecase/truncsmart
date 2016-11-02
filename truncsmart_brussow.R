@@ -14,7 +14,6 @@
 ##' test <- "123_567_9"
 ##' (truncsmart(test, 5, tol = c(1,2)))
 ##'
-##' edited 2016-10-04
 
 ### The actual result ################################################################################################################
 # Instead of making a bunch of possible strings, my script focuses on finding the appropriate "index" value 
@@ -57,7 +56,7 @@ truncsmart("This is not too short but medium", 30)
 # truncsmart <- Vectorize(truncsmart, USE.NAMES=FALSE)
 
 ### line breaking function - just a cleaned up truncsmart with a better out pasting. #################################################
-#new param newline is the break you want to insert.
+#new param "newline" is the break you want to insert.
 linetrunc <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, separator = c(" ", "_"), newline = "\n") {
   if(length(tol) > 2) stop("Please specify 1 or 2 values for tol.")
   lets <- unlist(strsplit(textstring, split = ""))
@@ -93,11 +92,11 @@ linetrunc <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, sepa
 }
 
 #testing linetrunc
-linetrunc("Here is a REALLY long test string that needs to be BROKEN into multiple LINES so that everything will WORK OUT look at the test", 30)
-linetrunc("THIS IS A DIFFERENT_LONG_STRING THAT HAS ALL CAPS BECAUSE CAPS ARE DIFFICULT_RIGHT_YES_THEY SURE ARE LOOK AT THE CAPS", 30)
-linetrunc("This is a string with nobreakswhereyoumightwantthemtobe", 30)
-linetrunc("Here is a short string", 30)
-linetrunc("What is the optimal length of string? I have no idea.", 30, 3)
+cat(linetrunc("Here is a REALLY long test string that needs to be BROKEN into multiple LINES so that everything will WORK OUT look at the test", 30))
+cat(linetrunc("THIS IS A DIFFERENT_LONG_STRING THAT HAS ALL CAPS BECAUSE CAPS ARE DIFFICULT_RIGHT_YES_THEY SURE ARE LOOK AT THE CAPS", 30))
+cat(linetrunc("This is a string with nobreakswhereyoumightwantthemtobe", 30))
+cat(linetrunc("Here is a short string", 30))
+cat(linetrunc("What is the optimal length of string? I have no idea.", 30, 3))
 
 # the original version ###############################################################################################################
 truncsmart_old <- function(textstring, linewidth, tol = c(5, 5), capwidth = 1.2, separator = c(" ", "_")) {
